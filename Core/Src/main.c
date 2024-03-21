@@ -62,40 +62,172 @@ void SystemClock_Config(void);
   */
 int main(void)
 {
-  /* USER CODE BEGIN 1 */
-
-  /* USER CODE END 1 */
 
   /* MCU Configuration--------------------------------------------------------*/
-
   /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
   HAL_Init();
-
-  /* USER CODE BEGIN Init */
-
-  /* USER CODE END Init */
-
-  /* Configure the system clock */
   SystemClock_Config();
 
-  /* USER CODE BEGIN SysInit */
+//_____________________UNCOMMENT FOR ADC_SECTION____________
+//	RCC->AHBENR |=  RCC_AHBENR_GPIOCEN;
+//	
+//	//LED RESET
+//	GPIOC->MODER = 0;
+//	GPIOC->PUPDR = 0;
+//	GPIOC->OSPEEDR = 0;
+//	GPIOC->OTYPER = 0;
+//	
+//	//LED SETUP
+//	GPIOC->MODER |= (1 << 12);
+//	GPIOC->MODER |= (1 << 14); 
+//	GPIOC->MODER |= (1 << 16);
+//	GPIOC->MODER |= (1 << 18);
+//	
+//	//Set GPIOC low
+//	GPIOC->ODR = 0;
+//	
+//	//Set PC3 to Analog mode. (Connects to ADC_IN13)
+//	GPIOC->MODER |= (3 << 6);
+//	
+//	// Enable the ADC1 in the RCC peripheral.
+//	RCC->APB2ENR |= RCC_APB2ENR_ADCEN;
+//	
+//	//Configure the ADC to 8-bit resolution, continuous conversion mode, hardware triggers
+//	//disabled (software trigger only).
+//	ADC1->CFGR1 = 0; //Clear: Also Disables Hardware Triggers
+//	ADC1->CFGR1 |= (1 << 13); //Continuous Conversion Mode
+//	ADC1->CFGR1 |= (2 << 3); //8-Bit Resolution
+//	
+//	// Select/enable the input pin’s channel for ADC conversion
+//	ADC1->CHSELR = 0; //Clear
+//	ADC1->CHSELR |= (1 << 13); //Set Channel to ADC_IN13
 
-  /* USER CODE END SysInit */
+//	// Perform a self-calibration, enable, and start the ADC.
+//	ADC1->CR = 0; //Cal
+//	ADC1->CR |= (1 << 31); //Enable
+//	
+//	//Wait:  ADCAL: ADC calibration bit 31 = 0
+//	while (((ADC1->CR)>>31) != 0){
+//		
+//	}
+//	
+//	//Zero out the ADEN
+//	ADC1->CR |= (1 << 0); //Set ADEN
+//	
+//	//Wait ADRDY Flag
+//	while((ADC1->ISR && 0x1) != 1){ //ISR Bit 0: ADRDY
+//	}
+//	
+//	//Set ADSTART: Start Conversion
+//	ADC1->CR |= (1 << 2);
+//	
+//	uint16_t reso = 0;
+//__________________________ADC_ABOVE_____________________
 
-  /* Initialize all configured peripherals */
-  /* USER CODE BEGIN 2 */
 
-  /* USER CODE END 2 */
+
+
+//_____________________DAC_SECTION_____________
+
+
+	//Enable GPIOA in RCC
+	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
+	
+	//GPIOA defaults
+	GPIOA->MODER = 0x28000000;
+	GPIOA->OTYPER = 0;
+	GPIOA->PUPDR = 0;
+	//GPIOA->OSPEEDR;
+	
+	//Set PA4 to AF (DAC_OUT1)
+	GPIOA->MODER |= (3 << 8);
+	
+	//Enable DAC in RCC
+	RCC->APB1ENR |= RCC_APB1ENR_DACEN;
+	
+	//DAC Setup
+	//2. Set the used DAC channel to software trigger mode.
+	DAC1->CR = 0; //Clear
+	DAC1->CR |= (7 << 3); //SW Trigger Mode
+	DAC1->SWTRIGR = 0;
+	DAC1->SWTRIGR |= (1 << 0); //SW trigger for channel 1.
+	
+	//3. Enable the used DAC channel.
+	//Enable
+	DAC1->CR |= (1 << 0);
+	
+	//const uint8_t sine_wave[32] = {127, 151, 175, 197, 216, 232, 244, 251, 254, 251, 244,
+	//	232, 216, 197, 175, 151, 127, 102, 78, 56, 37, 21, 9, 2, 0, 2, 9, 21, 37, 56, 78, 102};
+	
+	// Sine Wave: 8-bit, 32 samples/cycle
+	const uint8_t sine_table[32] = {127,151,175,197,216,232,244,251,254,251,244,
+	232,216,197,175,151,127,102,78,56,37,21,9,2,0,2,9,21,37,56,78,102};
+	// Triangle Wave: 8-bit, 32 samples/cycle
+	const uint8_t triangle_table[32] = {0,15,31,47,63,79,95,111,127,142,158,174,
+	190,206,222,238,254,238,222,206,190,174,158,142,127,111,95,79,63,47,31,15};
+	// Sawtooth Wave: 8-bit, 32 samples/cycle
+	const uint8_t sawtooth_table[32] = {0,7,15,23,31,39,47,55,63,71,79,87,95,103,
+	111,119,127,134,142,150,158,166,174,182,190,198,206,214,222,230,238,246};
+	// Square Wave: 8-bit, 32 samples/cycle
+	const uint8_t square_table[32] = {254,254,254,254,254,254,254,254,254,254,
+	254,254,254,254,254,254,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+
+	//5. In the main application loop, use an index variable to write the next value in the wave-table
+  //(array) to the appropriate DAC data register.
+	// 6. Use a 1ms delay between updating the DAC to new values
+
+//_____________________END_DAC_SECTION_____________________
+
+
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-    /* USER CODE END WHILE */
+		
+		//______________DAC__________________
+			for(int i = 0; i < 32; i++){
+			DAC1->DHR8R1 = sine_table[i];
+			HAL_Delay(1);
+			}
+		//____________END_DAC___________________
+		
+				
+				
+				
+		
+		//_____________________Uncomment for ADC____________________
+//		//8-bit ADC - 256 bits of resolution/4 LEDs = 64
+//		//RED 6, BLUE 7, ORANGE 8, GREEN 9
+//			
+//		reso = ADC1->DR;
+//		
+//		if (reso < 64){
+//			GPIOC->ODR |= (1 << 6); //Red High
+//			GPIOC->ODR &= ~((1 << 7) | (1 << 8) | (1 << 9));
+//		}
+//		else if (reso >= 64 && reso < 128){
+//			GPIOC->ODR |= (1 << 7); // Blue High
+//			GPIOC->ODR &= ~((1 << 8) | (1 << 9));
+//		}
+//		else if (reso >= 128 && reso < 192){
+//			GPIOC->ODR |= (1 << 8); //Orange High
+//			GPIOC->ODR &= ~(1 << 9);
+//		}
+//		else {
+//			GPIOC->ODR |= (1 << 9); //Green High
+//		}
+//		
+//		//Wait until ent of sequence before going around again
+//		while((ADC1->ISR & 0x4) != 4){
+//			
+//		}
+//		//Reset FLAG after one loop
+//		ADC1->ISR |= (1 << 2);
+//________________________ADC__ABOVE_________________________________
 
-    /* USER CODE BEGIN 3 */
-  }
-  /* USER CODE END 3 */
+
+	}
 }
 
 /**
