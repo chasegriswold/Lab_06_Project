@@ -1,5 +1,5 @@
-/* USER CODE BEGIN Header */
-/**
+/* ADC and DAC Lab (Uncomment as needed to obtain each version) */
+/**CHASE GRISWOLD
   ******************************************************************************
   * @file           : main.c
   * @brief          : Main program body
@@ -19,42 +19,8 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
-/* Private includes ----------------------------------------------------------*/
-/* USER CODE BEGIN Includes */
-
-/* USER CODE END Includes */
-
-/* Private typedef -----------------------------------------------------------*/
-/* USER CODE BEGIN PTD */
-
-/* USER CODE END PTD */
-
-/* Private define ------------------------------------------------------------*/
-/* USER CODE BEGIN PD */
-
-/* USER CODE END PD */
-
-/* Private macro -------------------------------------------------------------*/
-/* USER CODE BEGIN PM */
-
-/* USER CODE END PM */
-
-/* Private variables ---------------------------------------------------------*/
-
-/* USER CODE BEGIN PV */
-
-/* USER CODE END PV */
-
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-/* USER CODE BEGIN PFP */
-
-/* USER CODE END PFP */
-
-/* Private user code ---------------------------------------------------------*/
-/* USER CODE BEGIN 0 */
-
-/* USER CODE END 0 */
 
 /**
   * @brief  The application entry point.
@@ -133,7 +99,7 @@ int main(void)
 	//Enable GPIOA in RCC
 	RCC->AHBENR |= RCC_AHBENR_GPIOAEN;
 	
-	//GPIOA defaults
+	//Default GPIOA
 	GPIOA->MODER = 0x28000000;
 	GPIOA->OTYPER = 0;
 	GPIOA->PUPDR = 0;
@@ -150,14 +116,11 @@ int main(void)
 	DAC1->CR = 0; //Clear
 	DAC1->CR |= (7 << 3); //SW Trigger Mode
 	DAC1->SWTRIGR = 0;
-	DAC1->SWTRIGR |= (1 << 0); //SW trigger for channel 1.
+	DAC1->SWTRIGR |= (1 << 0); //SW Channel 1 Trigger
 	
 	//3. Enable the used DAC channel.
 	//Enable
 	DAC1->CR |= (1 << 0);
-	
-	//const uint8_t sine_wave[32] = {127, 151, 175, 197, 216, 232, 244, 251, 254, 251, 244,
-	//	232, 216, 197, 175, 151, 127, 102, 78, 56, 37, 21, 9, 2, 0, 2, 9, 21, 37, 56, 78, 102};
 	
 	// Sine Wave: 8-bit, 32 samples/cycle
 	const uint8_t sine_table[32] = {127,151,175,197,216,232,244,251,254,251,244,
@@ -187,8 +150,8 @@ int main(void)
 		
 		//______________DAC__________________
 			for(int i = 0; i < 32; i++){
-			DAC1->DHR8R1 = sine_table[i];
-			HAL_Delay(1);
+				DAC1->DHR8R1 = sine_table[i]; //Change this line to do triangle or saw.
+				HAL_Delay(1);
 			}
 		//____________END_DAC___________________
 		
@@ -199,9 +162,11 @@ int main(void)
 		//_____________________Uncomment for ADC____________________
 //		//8-bit ADC - 256 bits of resolution/4 LEDs = 64
 //		//RED 6, BLUE 7, ORANGE 8, GREEN 9
-//			
+//		
+//		//Apply the DR stored value to a variable that can be used in the loop.	
 //		reso = ADC1->DR;
 //		
+			
 //		if (reso < 64){
 //			GPIOC->ODR |= (1 << 6); //Red High
 //			GPIOC->ODR &= ~((1 << 7) | (1 << 8) | (1 << 9));
@@ -218,11 +183,11 @@ int main(void)
 //			GPIOC->ODR |= (1 << 9); //Green High
 //		}
 //		
-//		//Wait until ent of sequence before going around again
+//		//Wait: End Sequence
 //		while((ADC1->ISR & 0x4) != 4){
 //			
 //		}
-//		//Reset FLAG after one loop
+//		//Reset: FLAG after each loop
 //		ADC1->ISR |= (1 << 2);
 //________________________ADC__ABOVE_________________________________
 
